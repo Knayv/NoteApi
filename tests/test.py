@@ -89,7 +89,23 @@ class TestUsers(TestCase):
         """
         Редактирование пользователя
         """
-        pass
+        user_data = {
+            "username": "TestUser",
+            "password": "TestUser"
+        }
+        user = UserModel(**user_data)
+        user.save()
+        edit_user_data = {
+            "password": "new password",
+            "is_staff": True
+        }
+        self.client.put(f'/users/{user.id}',
+                        data=json.dumps(edit_user_data),
+                        content_type='application/json')
+        edited_user = UserModel.query.get(user.id)
+
+        self.assertTrue(edited_user.verify_password(edit_user_data["password"]))
+        self.assertEqual(edit_user_data["is_staff"], edited_user.is_staff)
 
     def test_delete_user(self):
         """
@@ -143,8 +159,11 @@ class TestNotes(TestCase):
                                data=json.dumps(note_data),
                                content_type='application/json')
         data = json.loads(res.data)
+        note = NoteModel.query.get(1)
         self.assertEqual(data["text"], note_data["text"])
         self.assertFalse(data["private"])
+        self.assertEqual(note.text, note_data["text"])
+        self.assertFalse(note.private)
 
     def test_get_notes(self):
         notes_data = [
@@ -214,8 +233,6 @@ class TestNotes(TestCase):
         """
         pass
 
-
-
     def test_private_public_notes(self):
         """
         Проверка создания/получения публичных/приватных заметок
@@ -250,6 +267,10 @@ class TestNotes(TestCase):
         """
         Редактирование заметки
         """
+
+    #     1. Создаем объект через ORM
+    #     2. Отправляем PUT запрос
+    #     3. Получаем измененный объект через ORM
 
     def test_delete_note(self):
         """
