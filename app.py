@@ -29,5 +29,6 @@ api.add_resource(NoteResource,
                  )
 
 docs.register(UserResource)
+docs.register(UsersListResource)
 if __name__ == '__main__':
     app.run(debug=Config.DEBUG, port=Config.PORT)
