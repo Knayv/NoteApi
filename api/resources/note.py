@@ -1,9 +1,11 @@
 from api import auth, abort, g, Resource, reqparse
 from api.models.note import NoteModel
-from api.schemas.note import note_schema, notes_schema
+from api.schemas.note import note_schema, notes_schema, NoteSchema, NoteRequestSchema
+from flask_apispec import doc, marshal_with, use_kwargs
+from flask_apispec.views import MethodResource
 
 
-class NoteResource(Resource):
+class NoteResource(MethodResource):
     @auth.login_required
     def get(self, note_id):
         """
@@ -32,7 +34,8 @@ class NoteResource(Resource):
             abort(403, error=f"Forbidden")
         note.text = note_data["text"]
 
-        note.private = note_data.get("private") or note.private
+        if note_data.get("private") is not None:
+            note.private = note_data.get("private")
 
         note.save()
         return note_schema.dump(note), 200
@@ -45,20 +48,20 @@ class NoteResource(Resource):
         return note_dict, 200
 
 
-class NotesListResource(Resource):
+@doc(tags=["Notes"])
+class NotesListResource(MethodResource):
     def get(self):
         notes = NoteModel.query.all()
         return notes_schema.dump(notes), 200
 
+    @doc(summary="Create note", description="Create new Note for current auth User")
+    @doc(security=[{"basicAuth": []}])
+    @doc(responses={400: {"description": 'Bad request'}})
+    @marshal_with(NoteSchema, code=201)
+    @use_kwargs(NoteRequestSchema, location=("json"))
     @auth.login_required
-    def post(self):
+    def post(self, **kwargs):
         author = g.user
-        parser = reqparse.RequestParser()
-        parser.add_argument("text", required=True)
-        # Подсказка: чтобы разобраться с private="False",
-        #   смотрите тут: https://flask-restful.readthedocs.io/en/latest/reqparse.html#request-parsing
-        parser.add_argument("private", required=True)
-        note_data = parser.parse_args()
-        note = NoteModel(author_id=author.id, **note_data)
+        note = NoteModel(author_id=author.id, **kwargs)
         note.save()
-        return note_schema.dump(note), 201
+        return note, 201

@@ -12,6 +12,11 @@ from flask_apispec.extension import FlaskApiSpec
 
 # from flasgger import Swagger
 
+security_definitions = {
+    "basicAuth": {
+        "type": "basic"
+    }
+}
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -20,6 +25,8 @@ app.config.update({
         title='Notes Project',
         version='v1',
         plugins=[MarshmallowPlugin()],
+        securityDefinitions=security_definitions,
+        security=[],
         openapi_version='2.0.0'
     ),
     'APISPEC_SWAGGER_URL': '/swagger',  # URI API Doc JSON
