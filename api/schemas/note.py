@@ -15,7 +15,6 @@ class NoteSchema(ma.SQLAlchemySchema):
     private = ma.auto_field()
     author = ma.Nested(UserSchema())
 
-
 # Десериализация запроса(request)
 class NoteRequestSchema(ma.SQLAlchemySchema):
     class Meta:
