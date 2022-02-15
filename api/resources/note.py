@@ -5,6 +5,7 @@ from api.schemas.note import note_schema, notes_schema, NoteSchema, NoteRequestS
 from flask_apispec import doc, marshal_with, use_kwargs
 from flask_apispec.views import MethodResource
 from webargs import fields
+from helpers.shortcuts import get_or_404
 
 
 class NoteResource(MethodResource):
@@ -14,9 +15,10 @@ class NoteResource(MethodResource):
         Пользователь может получить ТОЛЬКО свою заметку
         """
         author = g.user
-        note = NoteModel.query.get(note_id)
-        if not note:
-            abort(404, error=f"Note with id={note_id} not found")
+        # note = NoteModel.query.get(note_id)
+        # if not note:
+        #     abort(404, error=f"Note with id={note_id} not found")
+        note = get_or_404(NoteModel, note_id)
         return note_schema.dump(note), 200
 
     @auth.login_required
@@ -83,10 +85,12 @@ class NoteAddTagResource(MethodResource):
         note.save()
         return {}
 
+
 @doc(tags=["Notes"])
 class NotesFilterResource(MethodResource):
     # GET: / notes/filter?tags=[tag-1, tag-2, ...]
     @use_kwargs({"tags": fields.List(fields.Str())}, location=("query"))
+    @marshal_with(NoteSchema(many=True), code=200)
     def get(self, **kwargs):
-
-        return {}
+        notes = NoteModel.query.join(NoteModel.tags).filter(TagModel.name.in_(kwargs["tags"])).all()
+        return notes
